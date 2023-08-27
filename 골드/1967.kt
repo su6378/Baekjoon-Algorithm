@@ -1,52 +1,51 @@
 import java.io.*
-import java.util.StringTokenizer
-import kotlin.math.*
+import java.util.*
+import kotlin.collections.ArrayList
 
-lateinit var tree: ArrayList<ArrayList<Pair<Int, Int>>>
-lateinit var checked: BooleanArray // 리프 노드 체크 배열
-lateinit var visited: BooleanArray // 중복 방문 체크 배열
-lateinit var finished: BooleanArray // 리프 노드 중복 방문 체크 배열
+lateinit var st: StringTokenizer
+lateinit var graph: ArrayList<ArrayList<Pair<Int, Int>>>
+lateinit var checked: BooleanArray
+lateinit var visited: BooleanArray
 var answer = 0
+var node = 0
 
 fun main() = with(BufferedReader(InputStreamReader(System.`in`))) {
-
     val bw = BufferedWriter(OutputStreamWriter(System.out))
 
     val n = readLine().toInt()
 
-    tree = ArrayList()
+    graph = ArrayList()
+    checked = BooleanArray(n + 1) { true }
 
-    for (i in 0..n) {
-        tree.add(ArrayList())
-    }
-
-    checked = BooleanArray(n + 1){true}
-    finished = BooleanArray(n + 1)
+    repeat(n + 1) { graph.add(ArrayList()) }
 
     repeat(n - 1) {
-        val token = StringTokenizer(readLine())
-        val parent = token.nextToken().toInt()
-        val child = token.nextToken().toInt()
-        val weight = token.nextToken().toInt()
+        st = StringTokenizer(readLine())
+        val s = st.nextToken().toInt()
+        val e = st.nextToken().toInt()
+        val c = st.nextToken().toInt()
 
-        tree[parent].add(Pair(child, weight))
-        tree[child].add(Pair(parent, weight))
-
-        checked[parent] = false
+        graph[s].add(Pair(e, c))
+        graph[e].add(Pair(s, c))
+        checked[s] = false
     }
 
-    val leaves = ArrayList<Int>()
+    var rNode = 0
 
-    for (i in checked.indices) {
-        if (checked[i]) leaves.add(i)
+    for (i in 1..n) {
+        if (checked[i]) {
+            rNode = i
+            break
+        }
     }
 
-    for (i in leaves.indices) {
-        visited = BooleanArray(n + 1)
-        checked[leaves[i]] = false
-        maxDiameter(leaves[i],0)
-        finished[leaves[i]] = true
-    }
+    // 임의의 정점에서 가장 먼 정점 구하기
+    visited = BooleanArray(n + 1)
+    dfs(rNode, 0)
+
+    // 가장 먼 정점에서 가장 먼 거리 구해서 기존의 임의의 정점에서 가장 먼 거리와 비교
+    visited = BooleanArray(n + 1)
+    dfs(node, 0)
 
     bw.write("$answer")
 
@@ -54,17 +53,18 @@ fun main() = with(BufferedReader(InputStreamReader(System.`in`))) {
     bw.close()
 }
 
-// dfs 접근
-fun maxDiameter(start: Int, weight:Int) {
+fun dfs(s: Int, d: Int) {
 
-    visited[start] = true
-
-    for (next in tree[start]) {
-        if (!visited[next.first] && !finished[next.first]) {
-            maxDiameter(next.first,weight + next.second)
-        }
+    if (d > answer) { // 가장 먼 거리 정보 갱신
+        answer = d
+        node = s
     }
 
-    answer = max(answer,weight)
-    return
+    visited[s] = true
+
+    for (next in graph[s]) {
+        if (!visited[next.first]) {
+            dfs(next.first, d + next.second)
+        }
+    }
 }
